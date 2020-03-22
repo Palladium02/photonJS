@@ -11,18 +11,22 @@ class Photon {
         if(isObject(options)) {
             this.root = document.querySelector(options.el);
             this.data = options.data;
+            this.methods = options.methods;
             this.lifecycle;
             this.DIRECTIVEKEYS = [
                 'p-if',
                 'p-else',
-                'p-for'
+                'p-for',
+                'click'
             ];
             this.directiveELements = {
                 'p-if': [],
                 'p-else': [],
-                'p-for': []
+                'p-for': [],
+                'click': []
             }
             this.traverseRoot();
+            this.addEvents();
             this.lifeCycle();
         } else {
             console.error('');
@@ -38,6 +42,14 @@ class Photon {
                 match.removeAttribute(KEY);
             });
 
+        });
+    }
+
+    addEvents() {
+        this.directiveELements.click.forEach(element => {
+            element[0].addEventListener('click', () => {
+                this.methods[element[1]]();
+            });
         });
     }
 

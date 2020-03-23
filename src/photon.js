@@ -52,7 +52,7 @@ class Photon {
         });
 
     }
-
+     
     addEvents() {
         this.directiveELements['@click'].forEach(element => {
             element[0].addEventListener('click', () => {

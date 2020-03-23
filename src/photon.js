@@ -8,59 +8,74 @@ function isArray(a) {
 
 class Photon {
     constructor(options) {
-        if(isObject(options)) {
-            this.root = document.querySelector(options.el);
-            this.data = options.data;
-            this.methods = options.methods;
-            this.lifecycle;
-            this.DIRECTIVEKEYS = [
-                'p-if',
-                'p-else',
-                'p-for',
-                'click'
-            ];
-            this.directiveELements = {
-                'p-if': [],
-                'p-else': [],
-                'p-for': [],
-                'click': []
-            }
-            this.traverseRoot();
-            this.addEvents();
-            this.lifeCycle();
-        } else {
-            console.error('');
-            return undefined;
+        this.root = document.querySelector(options.el);
+        this.data = options.data;
+        this.methods = options.methods;
+        this.lifecycle;
+        this.DIRECTIVEKEYS = [
+            'p-if',
+            'p-else',
+            'p-for',
+            '@click'
+        ];
+        this.directiveELements = {
+            'p-if': [],
+            'p-else': [],
+            'p-for': [],
+            '@click': []
         }
+
+        this.initializeElements();
+        this.lifeCycle();
     }
 
-    traverseRoot() {
-        this.DIRECTIVEKEYS.forEach(KEY => {
-            let matches = this.root.querySelectorAll(`[${KEY}]`);
-            matches.forEach(match => {
-                this.directiveELements[KEY].push([match, match.getAttribute(KEY), match.parentNode]);
-                match.removeAttribute(KEY);
-            });
-
+    initializeElements() {
+        let attributes;
+        let children = Array.from(this.root.querySelectorAll('*'));
+        children.forEach(child => {
+            if(child.nodeType === 1) {
+                child.hasAttributes() ? attributes = Array.from(child.attributes) : attributes = [];
+            } else {
+                attributes = [];
+            }
+            if(isArray(attributes)) {
+                attributes.forEach(attribute => {
+                    this.DIRECTIVEKEYS.forEach(key => {
+                        if(attribute.name == key) {
+                            this.directiveELements[key].push([child, child.getAttribute(key), child.parentNode]);
+                            child.removeAttribute(key);
+                        }
+                    })
+                });
+            }
+            
         });
+
     }
 
     addEvents() {
-        this.directiveELements.click.forEach(element => {
+        this.directiveELements['@click'].forEach(element => {
             element[0].addEventListener('click', () => {
                 this.methods[element[1]]();
             });
         });
+        this.directiveELements['@click'] = [];
     }
 
     lifeCycle() {
-        this.traverseRoot();
         this.lifecycle = setInterval(() => {
+            this.initializeElements();
+            this.addEvents();
             for(let [key, value] of Object.entries(this.directiveELements)) {
                 value.forEach(value => {
                     switch (key) {
                         case 'p-if':
                             eval(value[1]) ? value[0].style.display = 'initial' : value[0].style.display = 'none';
+                            break;
+                        case '@click':
+                            value[0].addEventListener('click', () => {
+                                this.methods[value[1]]();
+                            });
                             break;
                         case 'p-for':
                             let parent = value[0].parentNode;
